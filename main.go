@@ -16,16 +16,16 @@ var config = searchpage.Config{
 
 	Request: func(r *http.Request) *bleve.SearchRequest {
 		b := searchpage.DefaultConfig.Request(r)
-		b.Fields = []string{"_type", "metadata.name", "metadata.namespace"}
+		b.Fields = []string{"render.name", "render.type", "render.taxonomy"}
 		return b
 	},
 
 	RenderMatches: func(w io.Writer, matches []*search.DocumentMatch) {
 		for _, m := range matches {
 			searchpage.DefaultMatch.Execute(w, map[string]interface{}{
-				"Name":     m.Fields["metadata.name"],
-				"Type":     m.Fields["_type"],
-				"Taxonomy": m.Index,
+				"Name":     m.Fields["render.name"],
+				"Type":     m.Fields["render.type"],
+				"Taxonomy": m.Fields["render.taxonomy"],
 				"Url":      "d/" + m.Index + "/" + m.ID,
 			})
 		}

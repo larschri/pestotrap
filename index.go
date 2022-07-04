@@ -31,6 +31,7 @@ func findFiles(dir string) ([]string, error) {
 	return r, err
 }
 
+// jq -S '.items|map(. += {id:.metadata.uid,render:{type:.kind,name:.metadata.name,taxonomy:.metadata.namespace}})|.[]'
 func decodeAndBatch(r io.Reader, b *bleve.Batch, s string) error {
 	decoder := json.NewDecoder(r)
 	i := 0
@@ -43,12 +44,14 @@ func decodeAndBatch(r io.Reader, b *bleve.Batch, s string) error {
 			return fmt.Errorf("failed to decode json: %w", err)
 		}
 
-		if _, ok := doc["_type"]; !ok {
-			doc["_type"] = doc["kind"]
+		var id interface{}
+		if id2, ok := doc["id"]; ok {
+			id = id2
+		} else {
+			id = i
 		}
-		doc["Taxonomy"] = s
 
-		b.Index(fmt.Sprintf("%s.%v", s, i), doc)
+		b.Index(fmt.Sprintf("%s.%v", s, id), doc)
 		i++
 	}
 	return nil
