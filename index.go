@@ -1,9 +1,7 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -31,28 +29,14 @@ func findFiles(dir string) ([]string, error) {
 	return r, err
 }
 
-// jq -S '.items|map(. += {id:.metadata.uid,render:{type:.kind,name:.metadata.name,taxonomy:.metadata.namespace}})|.[]'
-func decodeAndBatch(r io.Reader, b *bleve.Batch, s string) error {
-	decoder := json.NewDecoder(r)
-	i := 0
-	for {
-		var doc map[string]interface{}
-		if err := decoder.Decode(&doc); err != nil {
-			if err == io.EOF {
-				break
-			}
-			return fmt.Errorf("failed to decode json: %w", err)
-		}
+func fileToBatch(fn string, b *bleve.Batch, s string) error {
+	as, err := load(fn)
+	if err != nil {
+		return err
+	}
 
-		var id interface{}
-		if id2, ok := doc["id"]; ok {
-			id = id2
-		} else {
-			id = i
-		}
-
-		b.Index(fmt.Sprintf("%s.%v", s, id), doc)
-		i++
+	for _, a := range as {
+		b.Index(fmt.Sprintf("%s.%v", s, a["id"]), a)
 	}
 	return nil
 }
@@ -67,16 +51,9 @@ func indexDirectory(dir string, index bleve.Index) error {
 	batch := index.NewBatch()
 
 	for _, e := range []string(fls) {
-		f, err := os.Open(e)
-		if err != nil {
-			return fmt.Errorf("failed to open %s: %w", e, err)
-		}
-		defer f.Close()
-
 		t := strings.TrimPrefix(e, dir+"/")
-
-		if err := decodeAndBatch(f, batch, t); err != nil {
-			return fmt.Errorf("failed to process %s: %w", e, err)
+		if err := fileToBatch(e, batch, t); err != nil {
+			return err
 		}
 	}
 

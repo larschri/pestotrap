@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -30,6 +31,10 @@ var config = searchpage.Config{
 			})
 		}
 	},
+}
+
+func main2() {
+	fmt.Println(loadK8s("/home/larschri/tmp/all"))
 }
 
 func main() {
