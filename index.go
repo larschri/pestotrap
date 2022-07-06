@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/blevesearch/bleve/v2"
+	"github.com/larschri/pestotrap/load"
 )
 
 func findFiles(dir string) ([]string, error) {
@@ -30,7 +31,7 @@ func findFiles(dir string) ([]string, error) {
 }
 
 func fileToBatch(fn string, b *bleve.Batch) error {
-	as, err := load(fn)
+	as, err := load.File(fn)
 	if err != nil {
 		return err
 	}
