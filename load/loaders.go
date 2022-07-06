@@ -7,11 +7,12 @@ import (
 	"github.com/itchyny/gojq"
 )
 
-type Doc struct {
+type doc struct {
 	Id       string
 	Name     string
 	Type     string
 	Taxonomy string
+	Filename string
 	Doc      map[string]interface{}
 }
 
@@ -24,23 +25,44 @@ var k8sJq *gojq.Query = jqMust(`.items[]
 		Doc: .
 	}`)
 
-func loadK8s(filename string) ([]Doc, error) {
+func loadDocs(filename string, query *gojq.Query) ([]doc, error) {
 	bs, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
 
-	var xx []Doc
-	if err := jq(k8sJq, bs, &xx); err != nil {
+	var docs []doc
+	if err := jq(query, bs, &docs); err != nil {
 		return nil, err
 	}
 
-	return xx, nil
+	return docs, nil
 }
 
-func File(fn string) ([]Doc, error) {
+func File(fn string) (map[string]any, error) {
+	docs, err := fileToDocs(fn)
+	if err != nil {
+		return nil, err
+	}
+
+	r := make(map[string]any)
+	for _, a := range docs {
+		a.Doc["render"] = map[string]string{
+			"name":     a.Name,
+			"taxonomy": a.Taxonomy,
+			"type":     a.Type,
+			"filename": fn,
+		}
+		r[a.Id] = a.Doc
+
+	}
+	return r, nil
+
+}
+
+func fileToDocs(fn string) ([]doc, error) {
 	if strings.HasSuffix(fn, ".k8s") {
-		return loadK8s(fn)
+		return loadDocs(fn, k8sJq)
 	}
 
 	panic("not supported")

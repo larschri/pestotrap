@@ -36,13 +36,8 @@ func fileToBatch(fn string, b *bleve.Batch) error {
 		return err
 	}
 
-	for _, a := range as {
-		a.Doc["render"] = map[string]string{
-			"name":     a.Name,
-			"taxonomy": path.Base(fn) + " / " + a.Taxonomy,
-			"type":     a.Type,
-		}
-		b.Index(fmt.Sprintf("%s.%v", path.Base(fn), a.Id), a.Doc)
+	for k, v := range as {
+		b.Index(fmt.Sprintf("%s.%v", path.Base(fn), k), v)
 	}
 	return nil
 }
