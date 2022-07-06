@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
-	"strings"
 
 	"github.com/blevesearch/bleve/v2"
 )
@@ -29,14 +29,19 @@ func findFiles(dir string) ([]string, error) {
 	return r, err
 }
 
-func fileToBatch(fn string, b *bleve.Batch, s string) error {
+func fileToBatch(fn string, b *bleve.Batch) error {
 	as, err := load(fn)
 	if err != nil {
 		return err
 	}
 
 	for _, a := range as {
-		b.Index(fmt.Sprintf("%s.%v", s, a["id"]), a)
+		a.Doc["render"] = map[string]string{
+			"name":     a.Name,
+			"taxonomy": path.Base(fn) + " / " + a.Taxonomy,
+			"type":     a.Type,
+		}
+		b.Index(fmt.Sprintf("%s.%v", path.Base(fn), a.Id), a.Doc)
 	}
 	return nil
 }
@@ -51,8 +56,7 @@ func indexDirectory(dir string, index bleve.Index) error {
 	batch := index.NewBatch()
 
 	for _, e := range []string(fls) {
-		t := strings.TrimPrefix(e, dir+"/")
-		if err := fileToBatch(e, batch, t); err != nil {
+		if err := fileToBatch(e, batch); err != nil {
 			return err
 		}
 	}
