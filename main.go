@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -24,12 +23,10 @@ var config = searchpage.Config{
 	RenderMatches: func(w io.Writer, matches []*search.DocumentMatch) {
 		for _, m := range matches {
 			searchpage.DefaultMatch.Execute(w, map[string]interface{}{
-				"Name": m.Fields["render.name"],
-				"Type": m.Fields["render.type"],
-				"Taxonomy": fmt.Sprintf("%v / %v",
-					m.Fields["render.filename"],
-					m.Fields["render.taxonomy"]),
-				"Url": "d/" + m.Index + "/" + m.ID,
+				"Name":     m.Fields["render.name"],
+				"Type":     m.Fields["render.type"],
+				"Taxonomy": m.Fields["render.taxonomy"],
+				"Url":      "d/" + m.Index + "/" + m.ID,
 			})
 		}
 	},

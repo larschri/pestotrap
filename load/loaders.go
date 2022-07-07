@@ -2,6 +2,7 @@ package load
 
 import (
 	"io/ioutil"
+	"path"
 	"strings"
 
 	"github.com/itchyny/gojq"
@@ -45,11 +46,13 @@ func File(fn string) (map[string]any, error) {
 		return nil, err
 	}
 
+	s, _, _ := strings.Cut(path.Base(fn), ".")
+
 	r := make(map[string]any)
 	for _, a := range docs {
 		a.Doc["render"] = map[string]string{
 			"name":     a.Name,
-			"taxonomy": a.Taxonomy,
+			"taxonomy": s + "/" + a.Taxonomy,
 			"type":     a.Type,
 			"filename": fn,
 		}
