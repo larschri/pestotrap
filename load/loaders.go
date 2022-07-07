@@ -1,6 +1,7 @@
 package load
 
 import (
+	"fmt"
 	"io/ioutil"
 	"path"
 	"strings"
@@ -17,21 +18,20 @@ type doc struct {
 	Doc      map[string]interface{}
 }
 
-var k8sJq *gojq.Query = jqMust(`.items|map({
-		Id: .metadata.uid,
-		Type: .kind,
-		Name: .metadata.name,
-		Taxonomy: .metadata.namespace,
-		Doc: .
-	})`)
-
-func loadDocs(filename string, query *gojq.Query) ([]doc, error) {
-	bs, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return nil, err
-	}
-
-	return toDocs(query, bs)
+var parsers = []struct {
+	fileSuffix string
+	query      *gojq.Query
+}{
+	{
+		".k8s",
+		jqMust(`.items|map({
+				Id: .metadata.uid,
+				Type: .kind,
+				Name: .metadata.name,
+				Taxonomy: .metadata.namespace,
+				Doc: .
+		})`),
+	},
 }
 
 func File(fn string) (map[string]any, error) {
@@ -57,10 +57,16 @@ func File(fn string) (map[string]any, error) {
 }
 
 func fileToDocs(fn string) ([]doc, error) {
-	if strings.HasSuffix(fn, ".k8s") {
-		return loadDocs(fn, k8sJq)
+	for _, p := range parsers {
+		if strings.HasSuffix(fn, p.fileSuffix) {
+			bs, err := ioutil.ReadFile(fn)
+			if err != nil {
+				return nil, err
+			}
+
+			return toDocs(p.query, bs)
+		}
 	}
 
-	panic("not supported")
-	return nil, nil
+	return nil, fmt.Errorf("unsupported file type")
 }
