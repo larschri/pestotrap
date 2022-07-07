@@ -10,6 +10,7 @@ import (
 	"github.com/larschri/pestotrap/load"
 )
 
+// findFiles list the files in the given directory
 func findFiles(dir string) ([]string, error) {
 	var r []string
 	err := filepath.Walk(dir,
@@ -30,18 +31,7 @@ func findFiles(dir string) ([]string, error) {
 	return r, err
 }
 
-func fileToBatch(fn string, b *bleve.Batch) error {
-	as, err := load.File(fn)
-	if err != nil {
-		return err
-	}
-
-	for k, v := range as {
-		b.Index(fmt.Sprintf("%s.%v", path.Base(fn), k), v)
-	}
-	return nil
-}
-
+// indexDirectory indexes all files in the given directory
 func indexDirectory(dir string, index bleve.Index) error {
 
 	fls, err := findFiles(dir)
@@ -51,9 +41,14 @@ func indexDirectory(dir string, index bleve.Index) error {
 
 	batch := index.NewBatch()
 
-	for _, e := range []string(fls) {
-		if err := fileToBatch(e, batch); err != nil {
+	for _, fn := range fls {
+		as, err := load.File(fn)
+		if err != nil {
 			return err
+		}
+
+		for k, v := range as {
+			batch.Index(fmt.Sprintf("%s.%v", path.Base(fn), k), v)
 		}
 	}
 

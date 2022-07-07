@@ -52,9 +52,8 @@ func File(fn string) (map[string]any, error) {
 	for _, a := range docs {
 		a.Doc["render"] = map[string]string{
 			"name":     a.Name,
-			"taxonomy": s + "/" + a.Taxonomy,
+			"taxonomy": s + " / " + a.Taxonomy,
 			"type":     a.Type,
-			"filename": fn,
 		}
 		r[a.Id] = a.Doc
 
