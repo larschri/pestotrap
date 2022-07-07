@@ -35,7 +35,17 @@ var parsers = []struct {
 }
 
 func File(fn string) (map[string]any, error) {
-	docs, err := fileToDocs(fn)
+	parser := findParser(fn)
+	if parser == nil {
+		return nil, fmt.Errorf("unsupported file type")
+	}
+
+	bs, err := ioutil.ReadFile(fn)
+	if err != nil {
+		return nil, err
+	}
+
+	docs, err := toDocs(parser, bs)
 	if err != nil {
 		return nil, err
 	}
@@ -56,17 +66,11 @@ func File(fn string) (map[string]any, error) {
 
 }
 
-func fileToDocs(fn string) ([]doc, error) {
+func findParser(fn string) *gojq.Query {
 	for _, p := range parsers {
 		if strings.HasSuffix(fn, p.fileSuffix) {
-			bs, err := ioutil.ReadFile(fn)
-			if err != nil {
-				return nil, err
-			}
-
-			return toDocs(p.query, bs)
+			return p.query
 		}
 	}
-
-	return nil, fmt.Errorf("unsupported file type")
+	return nil
 }
