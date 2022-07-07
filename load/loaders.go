@@ -17,14 +17,13 @@ type doc struct {
 	Doc      map[string]interface{}
 }
 
-var k8sJq *gojq.Query = jqMust(`.items[]
-	| {
+var k8sJq *gojq.Query = jqMust(`.items|map({
 		Id: .metadata.uid,
 		Type: .kind,
 		Name: .metadata.name,
 		Taxonomy: .metadata.namespace,
 		Doc: .
-	}`)
+	})`)
 
 func loadDocs(filename string, query *gojq.Query) ([]doc, error) {
 	bs, err := ioutil.ReadFile(filename)
@@ -32,12 +31,7 @@ func loadDocs(filename string, query *gojq.Query) ([]doc, error) {
 		return nil, err
 	}
 
-	var docs []doc
-	if err := jq(query, bs, &docs); err != nil {
-		return nil, err
-	}
-
-	return docs, nil
+	return toDocs(query, bs)
 }
 
 func File(fn string) (map[string]any, error) {

@@ -44,7 +44,7 @@ func indexDirectory(dir string, index bleve.Index) error {
 	for _, fn := range fls {
 		as, err := load.File(fn)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to load file %v: %w", fn, err)
 		}
 
 		for k, v := range as {

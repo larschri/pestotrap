@@ -7,67 +7,33 @@ import (
 	"github.com/itchyny/gojq"
 )
 
-func jqOne(q *gojq.Query, bs []byte, target any) error {
-	a, err := jqraw(q, bs)
-	if err != nil {
-		return err
-	}
-
-	if len(a) != 1 {
-		return fmt.Errorf("expected on json object got %d", len(a))
-	}
-
-	return unmarshal(a[0], target)
-}
-
-// jq unmarshals the given bytes into target
-func jq(q *gojq.Query, bs []byte, target any) error {
-	a, err := jqraw(q, bs)
-	if err != nil {
-		return err
-	}
-
-	return unmarshal(a, target)
-}
-
-// jqraw unmarshals the given bytes into an untyped slice
-func jqraw(q *gojq.Query, bs []byte) ([]any, error) {
+func toDocs(q *gojq.Query, bs []byte) ([]doc, error) {
 	var all any
 	if err := json.Unmarshal(bs, &all); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal: %w", err)
 	}
 
-	var result []any
-
 	iter := q.Run(all)
-	for {
-		x, ok := iter.Next()
-		if !ok {
-			break
-		}
-
-		if err, ok := x.(error); ok {
-			return nil, fmt.Errorf("jq error: %w", err)
-		}
-
-		result = append(result, x)
+	d, ok := iter.Next()
+	if !ok {
+		return nil, fmt.Errorf("failed get output from jq")
 	}
 
-	return result, nil
-}
+	if _, ok := iter.Next(); ok {
+		return nil, fmt.Errorf("unexpected output from jq")
+	}
 
-// unmarshal is a helper function to translate a generic all object into a type
-func unmarshal(src, target any) error {
-	bs, err := json.Marshal(src)
+	bs2, err := json.Marshal(d)
 	if err != nil {
-		return fmt.Errorf("marshal failed: %w", err)
+		return nil, fmt.Errorf("failed to re-marshal object from jq: %w", err)
 	}
 
-	if err := json.Unmarshal(bs, target); err != nil {
-		return fmt.Errorf("unmarshal failed: %w", err)
+	var docs []doc
+	if err := json.Unmarshal(bs2, &docs); err != nil {
+		return nil, fmt.Errorf("failed to re-unmarshal to docs: %w", err)
 	}
 
-	return nil
+	return docs, nil
 }
 
 // jqMust parses s into a gojq.Query or panics on failure
