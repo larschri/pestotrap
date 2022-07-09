@@ -2,45 +2,27 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
+	"io/ioutil"
 
 	"github.com/blevesearch/bleve/v2"
 	"github.com/larschri/pestotrap/load"
 )
 
-// findFiles list the files in the given directory
-func findFiles(dir string) ([]string, error) {
-	var r []string
-	err := filepath.Walk(dir,
-		func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-
-			if info.IsDir() {
-				return nil
-			}
-
-			r = append([]string(r), path)
-
-			return nil
-		})
-
-	return r, err
-}
-
 // indexDirectory indexes all files in the given directory
 func indexDirectory(dir string, index bleve.Index) error {
 
-	fls, err := findFiles(dir)
+	fls, err := ioutil.ReadDir(dir)
 	if err != nil {
-		return fmt.Errorf("failed to travese %s: %w", dir, err)
+		return fmt.Errorf("failed to read dir %s: %w", dir, err)
 	}
 
 	flsMap := make(map[string]*load.File)
 	for _, fn := range fls {
-		f2, err := load.NewFile(fn)
+		if fn.IsDir() {
+			continue
+		}
+
+		f2, err := load.NewFile(dir + "/" + fn.Name())
 		if err != nil {
 			return err
 		}
@@ -53,8 +35,18 @@ func indexDirectory(dir string, index bleve.Index) error {
 	}
 
 	for _, fl := range flsMap {
-		if err := fl.Index(index); err != nil {
-			return fmt.Errorf("failed to load file %v: %w", fl, err)
+		docs, err := fl.Docs()
+		if err != nil {
+			return err
+		}
+
+		batch := index.NewBatch()
+		for _, a := range docs {
+			batch.Index(fmt.Sprintf("%v.%v", fl.Key(), a[load.Field_ID]), a)
+		}
+
+		if err := index.Batch(batch); err != nil {
+			return fmt.Errorf("failed to index: %w", err)
 		}
 
 	}

@@ -5,7 +5,6 @@ import (
 	"path"
 	"strings"
 
-	"github.com/blevesearch/bleve/v2"
 	"github.com/itchyny/gojq"
 )
 
@@ -40,25 +39,6 @@ type File struct {
 func (f *File) Key() string {
 	s, _, _ := strings.Cut(path.Base(f.filename), ".")
 	return s
-}
-
-func (f *File) Index(index bleve.Index) error {
-
-	docs, err := f.Docs()
-	if err != nil {
-		return err
-	}
-
-	batch := index.NewBatch()
-	for _, a := range docs {
-		batch.Index(fmt.Sprintf("%v.%v", f.Key(), a[Field_ID]), a)
-	}
-
-	if err := index.Batch(batch); err != nil {
-		return fmt.Errorf("failed to index: %w", err)
-	}
-
-	return nil
 }
 
 func NewFile(fn string) (*File, error) {
