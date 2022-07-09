@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 
 	"github.com/blevesearch/bleve/v2"
@@ -39,21 +38,25 @@ func indexDirectory(dir string, index bleve.Index) error {
 		return fmt.Errorf("failed to travese %s: %w", dir, err)
 	}
 
-	batch := index.NewBatch()
-
+	flsMap := make(map[string]*load.File)
 	for _, fn := range fls {
-		as, err := load.File(fn)
+		f2, err := load.NewFile(fn)
 		if err != nil {
-			return fmt.Errorf("failed to load file %v: %w", fn, err)
+			return err
 		}
 
-		for k, v := range as {
-			batch.Index(fmt.Sprintf("%s.%v", path.Base(fn), k), v)
+		if _, ok := flsMap[f2.Key()]; ok {
+			return fmt.Errorf("duplicate file name/key: %v", f2.Key())
 		}
+
+		flsMap[f2.Key()] = f2
 	}
 
-	if err := index.Batch(batch); err != nil {
-		return fmt.Errorf("failed to index: %w", err)
+	for _, fl := range flsMap {
+		if err := fl.Index(index); err != nil {
+			return fmt.Errorf("failed to load file %v: %w", fl, err)
+		}
+
 	}
 
 	return nil

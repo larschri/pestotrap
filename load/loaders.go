@@ -2,10 +2,10 @@ package load
 
 import (
 	"fmt"
-	"io/ioutil"
 	"path"
 	"strings"
 
+	"github.com/blevesearch/bleve/v2"
 	"github.com/itchyny/gojq"
 )
 
@@ -32,38 +32,44 @@ var parsers = []struct {
 	},
 }
 
-func File(fn string) (map[string]any, error) {
-	parser := findParser(fn)
-	if parser == nil {
-		return nil, fmt.Errorf("unsupported file type")
-	}
-
-	bs, err := ioutil.ReadFile(fn)
-	if err != nil {
-		return nil, err
-	}
-
-	docs, err := toDocs(parser, bs)
-	if err != nil {
-		return nil, err
-	}
-
-	s, _, _ := strings.Cut(path.Base(fn), ".")
-
-	r := make(map[string]any)
-	for _, a := range docs {
-		r[fmt.Sprintf("%v.%v", s, a[Field_ID])] = a
-
-	}
-	return r, nil
-
+type File struct {
+	query    *gojq.Query
+	filename string
 }
 
-func findParser(fn string) *gojq.Query {
+func (f *File) Key() string {
+	s, _, _ := strings.Cut(path.Base(f.filename), ".")
+	return s
+}
+
+func (f *File) Index(index bleve.Index) error {
+
+	docs, err := f.Docs()
+	if err != nil {
+		return err
+	}
+
+	batch := index.NewBatch()
+	for _, a := range docs {
+		batch.Index(fmt.Sprintf("%v.%v", f.Key(), a[Field_ID]), a)
+	}
+
+	if err := index.Batch(batch); err != nil {
+		return fmt.Errorf("failed to index: %w", err)
+	}
+
+	return nil
+}
+
+func NewFile(fn string) (*File, error) {
 	for _, p := range parsers {
 		if strings.HasSuffix(fn, p.fileSuffix) {
-			return p.query
+			return &File{
+				p.query,
+				fn,
+			}, nil
 		}
 	}
-	return nil
+
+	return nil, fmt.Errorf("unsupported file type")
 }

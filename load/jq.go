@@ -3,20 +3,26 @@ package load
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 
 	"github.com/itchyny/gojq"
 )
 
 type doc map[string]any
 
-func toDocs(q *gojq.Query, bs []byte) ([]doc, error) {
+func (f *File) Docs() ([]doc, error) {
+	bs, err := ioutil.ReadFile(f.filename)
+	if err != nil {
+		return nil, err
+	}
+
 	var all any
 	if err := json.Unmarshal(bs, &all); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal: %w", err)
 	}
 
 	var result []doc
-	iter := q.Run(all)
+	iter := f.query.Run(all)
 	for {
 		d, ok := iter.Next()
 		if !ok {
