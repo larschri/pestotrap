@@ -10,6 +10,7 @@ import (
 	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/search"
 	"github.com/gorilla/mux"
+	"github.com/larschri/pestotrap/load"
 	"github.com/larschri/searchpage"
 )
 
@@ -17,18 +18,23 @@ var config = searchpage.Config{
 
 	Request: func(r *http.Request) *bleve.SearchRequest {
 		b := searchpage.DefaultConfig.Request(r)
-		b.Fields = []string{"xxname", "xxfilename", "xxtype", "xxtaxonomy"}
+		b.Fields = []string{
+			load.Field_Name,
+			load.Field_Filename,
+			load.Field_Type,
+			load.Field_Taxonomy,
+		}
 		return b
 	},
 
 	RenderMatches: func(w io.Writer, matches []*search.DocumentMatch) {
 		for _, m := range matches {
 			searchpage.DefaultMatch.Execute(w, map[string]interface{}{
-				"Name": m.Fields["xxname"],
-				"Type": m.Fields["xxtype"],
+				"Name": m.Fields[load.Field_Name],
+				"Type": m.Fields[load.Field_Type],
 				"Taxonomy": fmt.Sprintf("%v / %v",
-					m.Fields["xxfilename"],
-					m.Fields["xxtaxonomy"]),
+					m.Fields[load.Field_Filename],
+					m.Fields[load.Field_Taxonomy]),
 				"Url": "d/" + m.Index + "/" + m.ID,
 			})
 		}
