@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -16,17 +17,19 @@ var config = searchpage.Config{
 
 	Request: func(r *http.Request) *bleve.SearchRequest {
 		b := searchpage.DefaultConfig.Request(r)
-		b.Fields = []string{"render.name", "render.filename", "render.type", "render.taxonomy"}
+		b.Fields = []string{"xxname", "xxfilename", "xxtype", "xxtaxonomy"}
 		return b
 	},
 
 	RenderMatches: func(w io.Writer, matches []*search.DocumentMatch) {
 		for _, m := range matches {
 			searchpage.DefaultMatch.Execute(w, map[string]interface{}{
-				"Name":     m.Fields["render.name"],
-				"Type":     m.Fields["render.type"],
-				"Taxonomy": m.Fields["render.taxonomy"],
-				"Url":      "d/" + m.Index + "/" + m.ID,
+				"Name": m.Fields["xxname"],
+				"Type": m.Fields["xxtype"],
+				"Taxonomy": fmt.Sprintf("%v / %v",
+					m.Fields["xxfilename"],
+					m.Fields["xxtaxonomy"]),
+				"Url": "d/" + m.Index + "/" + m.ID,
 			})
 		}
 	},

@@ -9,28 +9,18 @@ import (
 	"github.com/itchyny/gojq"
 )
 
-type doc struct {
-	Id       string
-	Name     string
-	Type     string
-	Taxonomy string
-	Filename string
-	Doc      map[string]interface{}
-}
-
 var parsers = []struct {
 	fileSuffix string
 	query      *gojq.Query
 }{
 	{
 		".k8s",
-		jqMust(`.items|map({
-				Id: .metadata.uid,
-				Type: .kind,
-				Name: .metadata.name,
-				Taxonomy: .metadata.namespace,
-				Doc: .
-		})`),
+		jqMust(`.items[]|.+{
+				xxid: .metadata.uid,
+				xxtype: .kind,
+				xxname: .metadata.name,
+				xxtaxonomy: .metadata.namespace
+		}`),
 	},
 }
 
@@ -54,12 +44,8 @@ func File(fn string) (map[string]any, error) {
 
 	r := make(map[string]any)
 	for _, a := range docs {
-		a.Doc["render"] = map[string]string{
-			"name":     a.Name,
-			"taxonomy": s + " / " + a.Taxonomy,
-			"type":     a.Type,
-		}
-		r[a.Id] = a.Doc
+		a["xxfilename"] = s
+		r[fmt.Sprintf("%v.%v", s, a["xxid"])] = a
 
 	}
 	return r, nil
