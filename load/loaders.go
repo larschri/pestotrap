@@ -14,7 +14,6 @@ const (
 	Field_Type     = "xxtype"
 	Field_Name     = "xxname"
 	Field_Taxonomy = "xxtaxonomy"
-	Field_Filename = "xxfilename"
 )
 
 var parsers = []struct {
@@ -53,7 +52,6 @@ func File(fn string) (map[string]any, error) {
 
 	r := make(map[string]any)
 	for _, a := range docs {
-		a[Field_Filename] = s
 		r[fmt.Sprintf("%v.%v", s, a[Field_ID])] = a
 
 	}

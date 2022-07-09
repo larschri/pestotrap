@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/search"
@@ -20,7 +21,6 @@ var config = searchpage.Config{
 		b := searchpage.DefaultConfig.Request(r)
 		b.Fields = []string{
 			load.Field_Name,
-			load.Field_Filename,
 			load.Field_Type,
 			load.Field_Taxonomy,
 		}
@@ -29,11 +29,12 @@ var config = searchpage.Config{
 
 	RenderMatches: func(w io.Writer, matches []*search.DocumentMatch) {
 		for _, m := range matches {
+			f, _, _ := strings.Cut(m.ID, ".")
 			searchpage.DefaultMatch.Execute(w, map[string]interface{}{
 				"Name": m.Fields[load.Field_Name],
 				"Type": m.Fields[load.Field_Type],
 				"Taxonomy": fmt.Sprintf("%v / %v",
-					m.Fields[load.Field_Filename],
+					f,
 					m.Fields[load.Field_Taxonomy]),
 				"Url": "d/" + m.Index + "/" + m.ID,
 			})
