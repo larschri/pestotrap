@@ -15,7 +15,7 @@ func IndexDirectory(dir string, index bleve.Index) error {
 		return fmt.Errorf("failed to read dir %s: %w", dir, err)
 	}
 
-	flsMap := make(map[string]*File)
+	flsMap := make(map[string]*file)
 	for _, fn := range fls {
 		if fn.IsDir() {
 			continue
@@ -34,7 +34,7 @@ func IndexDirectory(dir string, index bleve.Index) error {
 	}
 
 	for _, fl := range flsMap {
-		docs, err := fl.Docs()
+		docs, err := fl.docs()
 		if err != nil {
 			return err
 		}

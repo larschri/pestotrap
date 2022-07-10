@@ -10,14 +10,14 @@ import (
 	"github.com/itchyny/gojq"
 )
 
-type File struct {
+type file struct {
 	query    *gojq.Query
 	filename string
 }
 
 type doc map[string]any
 
-func (f *File) Docs() ([]doc, error) {
+func (f *file) docs() ([]doc, error) {
 	bs, err := ioutil.ReadFile(f.filename)
 	if err != nil {
 		return nil, err
@@ -47,15 +47,15 @@ func (f *File) Docs() ([]doc, error) {
 	return result, nil
 }
 
-func (f *File) Key() string {
+func (f *file) Key() string {
 	s, _, _ := strings.Cut(path.Base(f.filename), ".")
 	return s
 }
 
-func NewFile(fn string) (*File, error) {
+func NewFile(fn string) (*file, error) {
 	for _, p := range parsers {
 		if strings.HasSuffix(fn, p.fileSuffix) {
-			return &File{
+			return &file{
 				p.query,
 				fn,
 			}, nil
