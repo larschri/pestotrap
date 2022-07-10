@@ -4,9 +4,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"path"
+	"strings"
 
 	"github.com/itchyny/gojq"
 )
+
+type File struct {
+	query    *gojq.Query
+	filename string
+}
 
 type doc map[string]any
 
@@ -40,11 +47,20 @@ func (f *File) Docs() ([]doc, error) {
 	return result, nil
 }
 
-// jqMust parses s into a gojq.Query or panics on failure
-func jqMust(s string) *gojq.Query {
-	q, err := gojq.Parse(s)
-	if err != nil {
-		panic(err)
+func (f *File) Key() string {
+	s, _, _ := strings.Cut(path.Base(f.filename), ".")
+	return s
+}
+
+func NewFile(fn string) (*File, error) {
+	for _, p := range parsers {
+		if strings.HasSuffix(fn, p.fileSuffix) {
+			return &File{
+				p.query,
+				fn,
+			}, nil
+		}
 	}
-	return q
+
+	return nil, fmt.Errorf("unsupported file type")
 }

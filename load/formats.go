@@ -1,10 +1,6 @@
 package load
 
 import (
-	"fmt"
-	"path"
-	"strings"
-
 	"github.com/itchyny/gojq"
 )
 
@@ -31,25 +27,11 @@ var parsers = []struct {
 	},
 }
 
-type File struct {
-	query    *gojq.Query
-	filename string
-}
-
-func (f *File) Key() string {
-	s, _, _ := strings.Cut(path.Base(f.filename), ".")
-	return s
-}
-
-func NewFile(fn string) (*File, error) {
-	for _, p := range parsers {
-		if strings.HasSuffix(fn, p.fileSuffix) {
-			return &File{
-				p.query,
-				fn,
-			}, nil
-		}
+// jqMust parses s into a gojq.Query or panics on failure
+func jqMust(s string) *gojq.Query {
+	q, err := gojq.Parse(s)
+	if err != nil {
+		panic(err)
 	}
-
-	return nil, fmt.Errorf("unsupported file type")
+	return q
 }
