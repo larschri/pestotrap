@@ -57,7 +57,7 @@ func main() {
 	}
 
 	if *dir != "" {
-		if err := indexDirectory(*dir, idx); err != nil {
+		if err := load.IndexDirectory(*dir, idx); err != nil {
 			panic(err)
 		}
 	}
