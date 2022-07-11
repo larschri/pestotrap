@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/blevesearch/bleve/v2"
@@ -29,14 +30,14 @@ var config = searchpage.Config{
 
 	RenderMatches: func(w io.Writer, matches []*search.DocumentMatch) {
 		for _, m := range matches {
-			f, _, _ := strings.Cut(m.ID, ".")
+			_, f, _ := strings.Cut(m.Index, "/")
 			searchpage.DefaultMatch.Execute(w, map[string]interface{}{
 				"Name": m.Fields[load.Field_Name],
 				"Type": m.Fields[load.Field_Type],
 				"Taxonomy": fmt.Sprintf("%v / %v",
 					f,
 					m.Fields[load.Field_Taxonomy]),
-				"Url": "d/" + m.Index + "/" + m.ID,
+				"Url": "d/" + url.QueryEscape(url.QueryEscape(m.Index)) + "/" + m.ID,
 			})
 		}
 	},
@@ -47,22 +48,12 @@ func main() {
 	index := flag.String("index", ".", "blevesearch index")
 	flag.Parse()
 
-	mapping := bleve.NewIndexMapping()
-	idx, err := bleve.New(*index, mapping)
+	idx, err := load.IndexDirectory(*dir, *index)
 	if err != nil {
-		idx, err = bleve.Open(*index)
-		if err != nil {
-			panic(err)
-		}
+		panic(err)
 	}
 
-	if *dir != "" {
-		if err := load.IndexDirectory(*dir, idx); err != nil {
-			panic(err)
-		}
-	}
-
-	searchHandler := searchpage.New(&config, idx)
+	searchHandler := searchpage.New(&config, idx...)
 
 	r := mux.NewRouter()
 	r.PathPrefix("/s").Handler(http.StripPrefix("/s", searchHandler))
