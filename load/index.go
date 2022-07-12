@@ -34,31 +34,24 @@ func IndexDirectory(dir string, idxDir string) ([]bleve.Index, error) {
 	}
 
 	mapping := bleve.NewIndexMapping()
-	var indices []bleve.Index
 	for _, fl := range flsMap {
-		index, err := bleve.New(idxDir+"/"+fl.Key(), mapping)
+		fl.index, err = bleve.New(idxDir+"/"+fl.Key(), mapping)
 		if err != nil {
-			index, err = bleve.Open(idxDir + "/" + fl.Key())
+			fl.index, err = bleve.Open(idxDir + "/" + fl.Key())
 			if err != nil {
 				return nil, err
 			}
 		}
 
-		docs, err := fl.docs()
-		if err != nil {
+	}
+
+	var indices []bleve.Index
+	for _, fl := range flsMap {
+		if err := fl.indexDocs(); err != nil {
 			return nil, err
 		}
 
-		batch := index.NewBatch()
-		for _, a := range docs {
-			batch.Index(fmt.Sprintf("%v", a[Field_ID]), a)
-		}
-
-		if err := index.Batch(batch); err != nil {
-			return nil, fmt.Errorf("failed to index: %w", err)
-		}
-
-		indices = append(indices, index)
+		indices = append(indices, fl.index)
 	}
 
 	return indices, nil

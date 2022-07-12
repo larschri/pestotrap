@@ -7,12 +7,14 @@ import (
 	"path"
 	"strings"
 
+	"github.com/blevesearch/bleve/v2"
 	"github.com/itchyny/gojq"
 )
 
 type file struct {
 	query    *gojq.Query
 	filename string
+	index    bleve.Index
 }
 
 type doc map[string]any
@@ -52,12 +54,31 @@ func (f *file) Key() string {
 	return s
 }
 
+func (f *file) indexDocs() error {
+	docs, err := f.docs()
+	if err != nil {
+		return err
+	}
+
+	batch := f.index.NewBatch()
+	for _, a := range docs {
+		batch.Index(fmt.Sprintf("%v", a[Field_ID]), a)
+	}
+
+	if err := f.index.Batch(batch); err != nil {
+		return fmt.Errorf("failed to index: %w", err)
+	}
+
+	return nil
+}
+
 func NewFile(fn string) (*file, error) {
 	for _, p := range parsers {
 		if strings.HasSuffix(fn, p.fileSuffix) {
 			return &file{
 				p.query,
 				fn,
+				nil,
 			}, nil
 		}
 	}
