@@ -1,0 +1,10 @@
+map[string]interface{}{
+	"body": "syntax error\n", "headers": http.Header{
+		"Content-Type": []string{
+			"text/plain; charset=utf-8",
+		},
+		"Hx-Trigger":             []string{`{"setValidSearchInput":false}`},
+		"X-Content-Type-Options": []string{"nosniff"},
+	},
+	"status": 400,
+}

@@ -1,0 +1,81 @@
+map[string]interface{}{
+	"body": `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://unpkg.com/@picocss/pico@latest/css/pico.min.css">
+<script src="https://unpkg.com/htmx.org@1.7.0"></script>
+<title>Search page</title>
+</head>
+<body>
+<div style="float: left; padding: 1em">
+
+<script>
+htmx.on("htmx:responseError", openErrDialog)
+htmx.on("htmx:sendError", openErrDialog)
+htmx.on("setValidSearchInput", setValidSearchInput)
+
+function setValidSearchInput(e) {
+	htmx.find("#searchInput").
+		setAttribute("aria-invalid", !e.detail.value)
+}
+
+function openErrDialog(e) {
+	if (e.detail.xhr.getResponseHeader("hx-trigger")) {
+		return
+	}
+
+	header = e.detail.xhr.status;
+	if (!header) {
+		header = e.detail.error
+	}
+
+	htmx.find("#errdialogheader").innerHTML = header;
+	htmx.find("#errdialogbody").innerHTML = e.detail.xhr.responseText;
+	htmx.find("#errdialog").open = true;
+	document.documentElement.classList
+		.add("modal-is-open", "modal-is-opening");
+}
+
+function closeErrDialog() {
+	htmx.find("#errdialog").open = false;
+	document.documentElement.classList
+		.remove("modal-is-open", "modal-is-opening");
+}
+</script>
+
+<dialog id="errdialog" onclick="closeErrDialog()">
+<article>
+	<header id="errdialogheader"></header>
+	<p id="errdialogbody"></p>
+</article>
+</dialog>
+
+</div>
+
+<main class="container">
+<form>
+<input class="form-control"
+       type="search"
+       name="search"
+       placeholder="Begin Typing To Search ..."
+       id="searchInput"
+       autofocus
+       hx-get="q"
+       hx-trigger="keyup changed delay:200ms, search, load"
+       hx-target="#searchresult"
+       hx-swap="innerHTML"
+       hx-indicator=".htmx-indicator">
+</form>
+<div class="htmx-indicator" aria-busy="true"></div>
+<div id="searchresult" />
+
+	</main>
+</body>
+</html>
+`, "headers": http.Header{"Content-Type": []string{
+		"text/html; charset=utf-8",
+	}},
+	"status": 200,
+}

@@ -26,6 +26,13 @@ func OpenIndex(dir string) (bleve.Index, error) {
 	return bleve.New(dir, mapping)
 }
 
+func NewMemOnly() (bleve.Index, error) {
+	mapping := bleve.NewIndexMapping()
+	mapping.DefaultMapping.AddFieldMappingsAt(Field_FileVersion,
+		bleve.NewKeywordFieldMapping())
+	return bleve.NewMemOnly(mapping)
+}
+
 // fileModTimes helper function to extract versions from index
 func fileModTimes(index bleve.Index) (map[string]bool, error) {
 	q := bleve.NewMatchAllQuery()
