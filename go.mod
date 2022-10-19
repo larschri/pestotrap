@@ -4,7 +4,6 @@ go 1.18
 
 require (
 	github.com/blevesearch/bleve/v2 v2.3.2
-	github.com/gorilla/mux v1.8.0
 	github.com/hexops/autogold v1.3.0
 	github.com/itchyny/gojq v0.12.9
 	github.com/larschri/searchpage v0.0.0-20220630191043-101db8cd11f2
@@ -30,6 +29,7 @@ require (
 	github.com/golang/protobuf v1.3.2 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/google/go-cmp v0.5.4 // indirect
+	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/hexops/gotextdiff v1.0.3 // indirect
 	github.com/hexops/valast v1.4.0 // indirect
 	github.com/itchyny/timefmt-go v0.1.4 // indirect

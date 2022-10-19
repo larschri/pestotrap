@@ -11,7 +11,6 @@ import (
 
 	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/search"
-	"github.com/gorilla/mux"
 	"github.com/larschri/pestotrap/dirindex"
 	"github.com/larschri/searchpage"
 )
@@ -59,8 +58,8 @@ func main() {
 
 	searchHandler := searchpage.New(&config, idx)
 
-	r := mux.NewRouter()
-	r.PathPrefix("/s").Handler(http.StripPrefix("/s", searchHandler))
+	r := http.NewServeMux()
+	r.Handle("/s/", http.StripPrefix("/s", searchHandler))
 	hostport := "localhost:8090"
 	log.Println("Starting server on ", hostport)
 	log.Fatal(http.ListenAndServe(hostport, r))

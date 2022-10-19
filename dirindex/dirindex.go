@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/blevesearch/bleve/v2"
+	"github.com/blevesearch/bleve/v2/mapping"
 )
 
 type doc map[string]any
@@ -19,18 +20,14 @@ func OpenIndex(dir string) (bleve.Index, error) {
 		return idx, nil
 	}
 
-	mapping := bleve.NewIndexMapping()
-	mapping.DefaultMapping.AddFieldMappingsAt(Field_FileVersion,
-		bleve.NewKeywordFieldMapping())
-
-	return bleve.New(dir, mapping)
+	return bleve.New(dir, Mapping())
 }
 
-func NewMemOnly() (bleve.Index, error) {
-	mapping := bleve.NewIndexMapping()
-	mapping.DefaultMapping.AddFieldMappingsAt(Field_FileVersion,
+func Mapping() mapping.IndexMapping {
+	m := bleve.NewIndexMapping()
+	m.DefaultMapping.AddFieldMappingsAt(Field_FileVersion,
 		bleve.NewKeywordFieldMapping())
-	return bleve.NewMemOnly(mapping)
+	return m
 }
 
 // fileModTimes helper function to extract versions from index

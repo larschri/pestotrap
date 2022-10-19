@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/blevesearch/bleve/v2"
 	"github.com/hexops/autogold"
 
 	"github.com/larschri/pestotrap/dirindex"
@@ -19,7 +20,7 @@ import (
 //go:embed testdata/jsons
 var testdata embed.FS
 
-var handler *searchpage.Handler
+var handler http.Handler
 
 func TestMain(m *testing.M) {
 	jsons, err := fs.Sub(testdata, "testdata/jsons")
@@ -27,7 +28,7 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 
-	idx, err := dirindex.NewMemOnly()
+	idx, err := bleve.NewMemOnly(dirindex.Mapping())
 	if err != nil {
 		panic(err)
 	}

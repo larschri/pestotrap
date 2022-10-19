@@ -7,11 +7,26 @@ import (
 )
 
 const (
-	Field_ID          = "xxid"
-	Field_Type        = "xxtype"
-	Field_Name        = "xxname"
-	Field_Taxonomy    = "xxtaxonomy"
-	Field_Filename    = "xxfilename"
+	// Field_ID identifies an object inside a file, combined with
+	// Field_Filename to construct the document id
+	Field_ID = "xxid"
+
+	// Field_Type is the type/kind for the document. Used for display only
+	Field_Type = "xxtype"
+
+	// Field_Name is a human readlable name for the document. Used for
+	// display only
+	Field_Name = "xxname"
+
+	// Field_Taxonomy is a human readable taxonomy. Used for display only.
+	Field_Taxonomy = "xxtaxonomy"
+
+	// Field_Filename is the basename of the source file. Used to construct
+	// the document id
+	Field_Filename = "xxfilename"
+
+	// Field_FileVersion is a keyword field that identifies versioned
+	// source file. It must change when the source file changes.
 	Field_FileVersion = "xxfileversion"
 )
 
