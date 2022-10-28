@@ -1,6 +1,8 @@
 package dirindex
 
 import (
+	"encoding/json"
+	"fmt"
 	"strings"
 
 	"github.com/itchyny/gojq"
@@ -57,6 +59,38 @@ func jqMust(s string) *gojq.Query {
 		panic(err)
 	}
 	return q
+}
+
+func newBatch(bs []byte, fname string) ([]Doc, error) {
+	p := parser(fname)
+	if p == nil {
+		return nil, fmt.Errorf("unknown doc type %v", fname)
+	}
+
+	var all any
+	if err := json.Unmarshal(bs, &all); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal: %w", err)
+	}
+
+	var docs []Doc
+
+	iter := p.Run(all)
+
+	for {
+		d, ok := iter.Next()
+		if !ok {
+			break
+		}
+
+		m, ok := d.(map[string]any)
+		if !ok {
+			return nil, fmt.Errorf("illformed document %v", d)
+		}
+
+		docs = append(docs, Doc(m))
+	}
+
+	return docs, nil
 }
 
 func parser(name string) *gojq.Query {

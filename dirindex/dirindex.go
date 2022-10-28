@@ -1,7 +1,6 @@
 package dirindex
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/fs"
 	"log"
@@ -49,39 +48,25 @@ func fileModTimes(index bleve.Index) (map[string]bool, error) {
 	return m, nil
 }
 
+type Doc map[string]any
+
 // indexFile helper function to iterate over the documents in a file
 func indexFile(index bleve.Index, dir fs.FS, e fs.DirEntry) error {
-	p := parser(e.Name())
-	if p == nil {
-		return fmt.Errorf("unknown doc type %v", e.Name())
-	}
-
 	bs, err := fs.ReadFile(dir, e.Name())
 	if err != nil {
 		return err
 	}
 
-	var all any
-	if err := json.Unmarshal(bs, &all); err != nil {
-		return fmt.Errorf("failed to unmarshal: %w", err)
+	docs, err := newBatch(bs, e.Name())
+	if err != nil {
+		return err
 	}
 
-	iter := p.Run(all)
-
 	batch := index.NewBatch()
-	for {
-		d, ok := iter.Next()
-		if !ok {
-			break
-		}
-
-		m, ok := d.(map[string]any)
-		if !ok {
-			return fmt.Errorf("illformed document %v", d)
-		}
-		m[Field_FileVersion] = filestate(e)
-		m[Field_Filename] = e.Name()
-		batch.Index(fmt.Sprintf("%s/%s", m[Field_Filename], m[Field_ID]), m)
+	for _, doc := range docs {
+		doc[Field_FileVersion] = filestate(e)
+		doc[Field_Filename] = e.Name()
+		batch.Index(fmt.Sprintf("%s/%s", doc[Field_Filename], doc[Field_ID]), doc)
 	}
 	return index.Batch(batch)
 }
