@@ -8,6 +8,7 @@ import (
 
 	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/mapping"
+	"github.com/larschri/pestotrap/documents"
 )
 
 type doc map[string]any
@@ -24,7 +25,7 @@ func OpenIndex(dir string) (bleve.Index, error) {
 
 func Mapping() mapping.IndexMapping {
 	m := bleve.NewIndexMapping()
-	m.DefaultMapping.AddFieldMappingsAt(Field_FileVersion,
+	m.DefaultMapping.AddFieldMappingsAt(documents.Field_FileVersion,
 		bleve.NewKeywordFieldMapping())
 	return m
 }
@@ -32,7 +33,7 @@ func Mapping() mapping.IndexMapping {
 // fileModTimes helper function to extract versions from index
 func fileModTimes(index bleve.Index) (map[string]bool, error) {
 	q := bleve.NewMatchAllQuery()
-	fr := bleve.NewFacetRequest(Field_FileVersion, 1000000)
+	fr := bleve.NewFacetRequest(documents.Field_FileVersion, 1000000)
 	r := bleve.NewSearchRequest(q)
 	r.AddFacet("f", fr)
 	r.Size = 0
@@ -48,25 +49,18 @@ func fileModTimes(index bleve.Index) (map[string]bool, error) {
 	return m, nil
 }
 
-type Doc map[string]any
-
 // indexFile helper function to iterate over the documents in a file
 func indexFile(index bleve.Index, dir fs.FS, e fs.DirEntry) error {
-	bs, err := fs.ReadFile(dir, e.Name())
-	if err != nil {
-		return err
-	}
-
-	docs, err := newBatch(bs, e.Name())
+	docs, err := documents.Documents(dir, e.Name())
 	if err != nil {
 		return err
 	}
 
 	batch := index.NewBatch()
 	for _, doc := range docs {
-		doc[Field_FileVersion] = filestate(e)
-		doc[Field_Filename] = e.Name()
-		batch.Index(fmt.Sprintf("%s/%s", doc[Field_Filename], doc[Field_ID]), doc)
+		doc[documents.Field_FileVersion] = filestate(e)
+		doc[documents.Field_Filename] = e.Name()
+		batch.Index(fmt.Sprintf("%s/%s", doc[documents.Field_Filename], doc[documents.Field_ID]), doc)
 	}
 	return index.Batch(batch)
 }
@@ -74,7 +68,7 @@ func indexFile(index bleve.Index, dir fs.FS, e fs.DirEntry) error {
 // deleteDocsByFileModTime deletes old docs
 func deleteDocsByFileModTime(idx bleve.Index, mtm string) error {
 	q := bleve.NewTermQuery(mtm)
-	q.FieldVal = Field_FileVersion
+	q.FieldVal = documents.Field_FileVersion
 
 	res, err := idx.Search(bleve.NewSearchRequest(q))
 	if err != nil {
@@ -91,7 +85,7 @@ func deleteDocsByFileModTime(idx bleve.Index, mtm string) error {
 
 // update updates the index with the contents of the given dir
 func update(index bleve.Index, dir fs.FS) error {
-	if index.Mapping().AnalyzerNameForPath(Field_FileVersion) != "keyword" {
+	if index.Mapping().AnalyzerNameForPath(documents.Field_FileVersion) != "keyword" {
 		return fmt.Errorf("incompatible index")
 	}
 

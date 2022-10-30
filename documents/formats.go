@@ -1,12 +1,15 @@
-package dirindex
+package documents
 
 import (
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"strings"
 
 	"github.com/itchyny/gojq"
 )
+
+type Doc map[string]any
 
 const (
 	// Field_ID identifies an object inside a file, combined with
@@ -31,6 +34,16 @@ const (
 	// source file. It must change when the source file changes.
 	Field_FileVersion = "xxfileversion"
 )
+
+// Documents returns the documents from the given file
+func Documents(dir fs.FS, fname string) ([]Doc, error) {
+	bs, err := fs.ReadFile(dir, fname)
+	if err != nil {
+		return nil, err
+	}
+
+	return newBatch(bs, fname)
+}
 
 var parsers = []struct {
 	fileSuffix string

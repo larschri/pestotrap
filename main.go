@@ -12,6 +12,7 @@ import (
 	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/search"
 	"github.com/larschri/pestotrap/dirindex"
+	"github.com/larschri/pestotrap/documents"
 	"github.com/larschri/searchpage"
 )
 
@@ -20,10 +21,10 @@ var config = searchpage.Config{
 	Request: func(r *http.Request) *bleve.SearchRequest {
 		b := searchpage.DefaultConfig.Request(r)
 		b.Fields = []string{
-			dirindex.Field_Name,
-			dirindex.Field_Type,
-			dirindex.Field_Taxonomy,
-			dirindex.Field_Filename,
+			documents.Field_Name,
+			documents.Field_Type,
+			documents.Field_Taxonomy,
+			documents.Field_Filename,
 		}
 		return b
 	},
@@ -31,11 +32,11 @@ var config = searchpage.Config{
 	RenderMatches: func(w io.Writer, matches []*search.DocumentMatch) {
 		for _, m := range matches {
 			searchpage.DefaultMatch.Execute(w, map[string]interface{}{
-				"Name": m.Fields[dirindex.Field_Name],
-				"Type": m.Fields[dirindex.Field_Type],
+				"Name": m.Fields[documents.Field_Name],
+				"Type": m.Fields[documents.Field_Type],
 				"Taxonomy": fmt.Sprintf("%v / %v",
-					m.Fields[dirindex.Field_Filename],
-					m.Fields[dirindex.Field_Taxonomy]),
+					m.Fields[documents.Field_Filename],
+					m.Fields[documents.Field_Taxonomy]),
 				"Url": "d?index=" + m.Index + "&doc=" + m.ID,
 			})
 		}
