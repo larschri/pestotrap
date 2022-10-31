@@ -6,7 +6,7 @@ map[string]interface{}{
     <small><i>raw1.raw / taxonomy1</i></small>
   </summary>
   <span aria-busy="true"
-	hx-get="d?index=&amp;doc=raw1.raw/id1"
+	hx-get="/x/raw1.raw?id=id1"
 	hx-swap="outerHTML"
 	hx-trigger="toggle from:closest details">
   </span>

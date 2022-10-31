@@ -25,6 +25,7 @@ var config = searchpage.Config{
 			documents.Field_Type,
 			documents.Field_Taxonomy,
 			documents.Field_Filename,
+			documents.Field_ID,
 		}
 		return b
 	},
@@ -37,7 +38,9 @@ var config = searchpage.Config{
 				"Taxonomy": fmt.Sprintf("%v / %v",
 					m.Fields[documents.Field_Filename],
 					m.Fields[documents.Field_Taxonomy]),
-				"Url": "d?index=" + m.Index + "&doc=" + m.ID,
+				"Url": fmt.Sprintf("/x/%v?id=%v",
+					m.Fields[documents.Field_Filename],
+					m.Fields[documents.Field_ID]),
 			})
 		}
 	},
@@ -61,6 +64,7 @@ func main() {
 
 	r := http.NewServeMux()
 	r.Handle("/s/", http.StripPrefix("/s", searchHandler))
+	r.Handle("/x/", http.StripPrefix("/x", documents.Server{os.DirFS(*dir)}))
 	hostport := "localhost:8090"
 	log.Println("Starting server on ", hostport)
 	log.Fatal(http.ListenAndServe(hostport, r))
