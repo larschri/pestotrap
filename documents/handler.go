@@ -3,7 +3,6 @@ package documents
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io/fs"
 	"net/http"
 	"strings"
@@ -13,29 +12,27 @@ type Server struct {
 	fs.FS
 }
 
-func (s Server) lookup(r *http.Request) (any, error) {
-	docs, err := Documents(s, strings.TrimPrefix(r.URL.Path, "/"))
+func (s Server) Document(file string, id string) Doc {
+	docs, err := Documents(s, file)
 	if err != nil {
-		return nil, fmt.Errorf("%v: not found", r.URL.Path)
+		return nil
 	}
 
-	id := r.URL.Query().Get("id")
-	if id != "" {
-		for _, d := range docs {
-			if d[Field_ID] == id {
-				return d, nil
-			}
+	for _, d := range docs {
+		if d[Field_ID] == id {
+			return d
 		}
-
-		return nil, fmt.Errorf("%v: not found", id)
 	}
 
-	return docs, nil
+	return nil
 }
 
 func (s Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	o, err := s.lookup(r)
-	if err != nil {
+	filename := strings.TrimPrefix(r.URL.Path, "/")
+	id := r.URL.Query().Get("id")
+
+	doc := s.Document(filename, id)
+	if doc == nil {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}
@@ -43,17 +40,21 @@ func (s Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var b bytes.Buffer
 	enc := json.NewEncoder(&b)
 	enc.SetIndent("", "    ")
+	enc.SetEscapeHTML(true)
 
-	if _, err = b.Write([]byte("<pre>")); err != nil {
+	if _, err := b.Write([]byte("<pre>")); err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 
-	if err := enc.Encode(o); err != nil {
+	if err := enc.Encode(doc); err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 
-	if _, err = b.Write([]byte("</pre>")); err != nil {
+	if _, err := b.Write([]byte("</pre>")); err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 
 	_, _ = w.Write(b.Bytes())
