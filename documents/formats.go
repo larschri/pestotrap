@@ -50,6 +50,16 @@ var parsers = []struct {
 	query      *gojq.Query
 }{
 	{
+		".jokes",
+		jqMust(`.[] | . +
+		{
+			xxid: .id | tostring,
+			xxtype: "Joke",
+			xxname: .title,
+			xxtaxonomy: "Joke"
+		}`),
+	},
+	{
 		".k8s",
 		jqMust(`.items[] | . +
 		{

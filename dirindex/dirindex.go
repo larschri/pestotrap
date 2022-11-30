@@ -1,33 +1,36 @@
 package dirindex
 
 import (
+	"errors"
 	"fmt"
 	"io/fs"
 	"log"
-	"time"
 
 	"github.com/blevesearch/bleve/v2"
-	"github.com/blevesearch/bleve/v2/mapping"
 	"github.com/larschri/pestotrap/documents"
 )
 
 type doc map[string]any
 
+var indexMapping = bleve.NewIndexMapping()
+
+func init() {
+	indexMapping.DefaultMapping.AddFieldMappingsAt(
+		documents.Field_FileVersion,
+		bleve.NewKeywordFieldMapping())
+}
+
 // OpenIndex opens or creates the index
 func OpenIndex(dir string) (bleve.Index, error) {
 	idx, err := bleve.Open(dir)
 	if err == nil {
+		if idx.Mapping().AnalyzerNameForPath(documents.Field_FileVersion) != "keyword" {
+			return nil, errors.New("not a valid index (incorrect mapping)")
+		}
 		return idx, nil
 	}
 
-	return bleve.New(dir, Mapping())
-}
-
-func Mapping() mapping.IndexMapping {
-	m := bleve.NewIndexMapping()
-	m.DefaultMapping.AddFieldMappingsAt(documents.Field_FileVersion,
-		bleve.NewKeywordFieldMapping())
-	return m
+	return bleve.New(dir, indexMapping)
 }
 
 // fileModTimes helper function to extract versions from index
@@ -117,45 +120,5 @@ func update(index bleve.Index, dir fs.FS) error {
 		}
 	}
 
-	return nil
-}
-
-func updateIfModified(index bleve.Index, dir fs.FS, state dirstate) dirstate {
-	newState, err := newDirstate(dir)
-	if err != nil {
-		return state
-	}
-
-	if state.equal(newState) {
-		return state
-	}
-
-	if err := update(index, dir); err != nil {
-		return state
-	}
-
-	return newState
-}
-
-// Start the indexing goroutine that checks for updates
-func Start(dir fs.FS, index bleve.Index, c <-chan time.Time) error {
-	state, err := newDirstate(dir)
-	if err != nil {
-		return err
-	}
-
-	if err := update(index, dir); err != nil {
-		return err
-	}
-
-	go func() {
-		for {
-			_, ok := <-c
-			if !ok {
-				return
-			}
-			state = updateIfModified(index, dir, state)
-		}
-	}()
 	return nil
 }

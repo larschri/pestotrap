@@ -1,54 +1,22 @@
 package main
 
 import (
+	"context"
 	"flag"
-	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
-	"time"
 
-	"github.com/blevesearch/bleve/v2"
-	"github.com/blevesearch/bleve/v2/search"
 	"github.com/larschri/pestotrap/dirindex"
 	"github.com/larschri/pestotrap/documents"
-	"github.com/larschri/searchpage"
+	"github.com/larschri/pestotrap/hxwrapper"
+	"github.com/larschri/pestotrap/searchpage"
 )
-
-var config = searchpage.Config{
-
-	Request: func(r *http.Request) *bleve.SearchRequest {
-		b := searchpage.DefaultConfig.Request(r)
-		b.Fields = []string{
-			documents.Field_Name,
-			documents.Field_Type,
-			documents.Field_Taxonomy,
-			documents.Field_Filename,
-			documents.Field_ID,
-		}
-		return b
-	},
-
-	RenderMatches: func(w io.Writer, matches []*search.DocumentMatch) {
-		for _, m := range matches {
-			searchpage.DefaultMatch.Execute(w, map[string]interface{}{
-				"Name": m.Fields[documents.Field_Name],
-				"Type": m.Fields[documents.Field_Type],
-				"Taxonomy": fmt.Sprintf("%v / %v",
-					m.Fields[documents.Field_Filename],
-					m.Fields[documents.Field_Taxonomy]),
-				"Url": fmt.Sprintf("/x/%v?id=%v",
-					m.Fields[documents.Field_Filename],
-					m.Fields[documents.Field_ID]),
-			})
-		}
-	},
-}
 
 func main() {
 	dir := flag.String("dir", "", "directory with json files")
 	index := flag.String("index", ".", "blevesearch index")
+	addr := flag.String("addr", "localhost:8090", "the address for listening")
 	flag.Parse()
 
 	idx, err := dirindex.OpenIndex(*index)
@@ -56,16 +24,18 @@ func main() {
 		panic(err)
 	}
 
-	if err := dirindex.Start(os.DirFS(*dir), idx, time.NewTicker(10*time.Second).C); err != nil {
-		panic(err)
-	}
+	runner := dirindex.NewWatcher(os.DirFS(*dir), idx)
+	go func() {
+		if err := runner.Watch(context.TODO()); err != nil {
+			log.Fatal(err)
+		}
+	}()
 
-	searchHandler := searchpage.New(&config, idx)
+	searchHandler := searchpage.New(idx)
 
 	r := http.NewServeMux()
-	r.Handle("/s/", http.StripPrefix("/s", searchHandler))
-	r.Handle("/x/", http.StripPrefix("/x", documents.Server{os.DirFS(*dir)}))
-	hostport := "localhost:8090"
-	log.Println("Starting server on ", hostport)
-	log.Fatal(http.ListenAndServe(hostport, r))
+	r.Handle("/s/", http.StripPrefix("/s", hxwrapper.Handler(searchHandler)))
+	r.Handle("/x/", http.StripPrefix("/x", hxwrapper.Handler(documents.Server{os.DirFS(*dir)})))
+	log.Println("Starting server on ", *addr)
+	log.Fatal(http.ListenAndServe(*addr, r))
 }

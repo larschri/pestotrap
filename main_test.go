@@ -10,11 +10,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/blevesearch/bleve/v2"
 	"github.com/hexops/autogold"
 
 	"github.com/larschri/pestotrap/dirindex"
-	"github.com/larschri/searchpage"
+	"github.com/larschri/pestotrap/hxwrapper"
+	"github.com/larschri/pestotrap/searchpage"
 )
 
 //go:embed testdata/jsons
@@ -28,7 +28,7 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 
-	idx, err := bleve.NewMemOnly(dirindex.Mapping())
+	idx, err := dirindex.TestIndex()
 	if err != nil {
 		panic(err)
 	}
@@ -36,11 +36,11 @@ func TestMain(m *testing.M) {
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 
-	if err := dirindex.Start(jsons, idx, ticker.C); err != nil {
+	if err := dirindex.NewWatcher(jsons, idx).UpdateIfModified(); err != nil {
 		panic(err)
 	}
 
-	handler = searchpage.New(&config, idx)
+	handler = hxwrapper.Handler(searchpage.New(idx))
 	os.Exit(m.Run())
 }
 

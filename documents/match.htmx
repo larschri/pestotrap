@@ -1,0 +1,12 @@
+<details>
+	  <summary>
+	    {{ .Name }} <small><i>{{ .Type }}</i></small>
+	    <br>
+	    <small><i>{{ .Taxonomy }}</i></small>
+	  </summary>
+	  <span aria-busy="true"
+		hx-get="{{ .Url }}"
+		hx-swap="outerHTML"
+		hx-trigger="toggle from:closest details">
+	  </span>
+</details>
