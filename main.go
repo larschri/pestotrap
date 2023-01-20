@@ -14,8 +14,8 @@ import (
 )
 
 func main() {
-	dir := flag.String("dir", "", "directory with json files")
-	index := flag.String("index", ".", "blevesearch index")
+	dir := flag.String("dir", "testdata/jsons", "directory with json files")
+	index := flag.String("index", "myindex", "blevesearch index")
 	addr := flag.String("addr", "localhost:8090", "the address for listening")
 	flag.Parse()
 
@@ -36,6 +36,7 @@ func main() {
 	r := http.NewServeMux()
 	r.Handle("/s/", http.StripPrefix("/s", hxwrapper.Handler(searchHandler)))
 	r.Handle("/x/", http.StripPrefix("/x", hxwrapper.Handler(documents.Server{os.DirFS(*dir)})))
+	r.Handle("/", http.RedirectHandler("/s", http.StatusFound))
 	log.Println("Starting server on ", *addr)
 	log.Fatal(http.ListenAndServe(*addr, r))
 }
