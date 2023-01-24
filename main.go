@@ -36,6 +36,7 @@ func main() {
 	r := http.NewServeMux()
 	r.Handle("/s/", http.StripPrefix("/s", hxwrapper.Handler(searchHandler)))
 	r.Handle("/x/", http.StripPrefix("/x", hxwrapper.Handler(documents.Server{os.DirFS(*dir)})))
+	r.Handle("/", http.RedirectHandler("/s/", http.StatusMovedPermanently))
 	log.Println("Starting server on ", *addr)
 	log.Fatal(http.ListenAndServe(*addr, r))
 }
