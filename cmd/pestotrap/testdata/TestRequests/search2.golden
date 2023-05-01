@@ -1,0 +1,9 @@
+map[string]interface{}{
+	"body": "\n\n\n", "headers": http.Header{
+		"Content-Type": []string{
+			"text/plain; charset=utf-8",
+		},
+		"Hx-Trigger": []string{`{"setValidSearchInput":true}`},
+	},
+	"status": 200,
+}

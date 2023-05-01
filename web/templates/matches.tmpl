@@ -1,0 +1,5 @@
+{{ .Matches }}
+
+{{ if ne .Next "" }}
+	<div hx-get="q?{{ .Next }}" hx-trigger="revealed"/>
+{{ end }}

@@ -21,10 +21,6 @@
 	}
 
 	function openErrDialog(e) {
-		if (e.detail.xhr.getResponseHeader("hx-trigger")) {
-			return
-		}
-
 		header = e.detail.xhr.status;
 		if (!header) {
 			header = e.detail.error
@@ -52,5 +48,9 @@
 	</dialog>
 
 </div>
-
 <main class="container">
+	{{template "form.tmpl" .}}
+</main>
+
+</body>
+</html>

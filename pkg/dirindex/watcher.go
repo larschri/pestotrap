@@ -47,15 +47,13 @@ func (r *Watcher) UpdateIfModified() error {
 
 // Watch the directory and update the directory until ctx is closed or another
 // error occurs.
-func (r *Watcher) Watch(ctx context.Context) error {
+func (r *Watcher) Watch(ctx context.Context, dir string) error {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return fmt.Errorf("failed to create new watcher: %w", err)
 	}
 	defer watcher.Close()
 
-	// Convert to string - works if r.dir was created by os.DirFS
-	dir := fmt.Sprintf("%v", r.dir)
 	if err := watcher.Add(dir); err != nil {
 		return fmt.Errorf("failed to add directory %v to watcher: %w", r.dir, err)
 	}

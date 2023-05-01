@@ -12,9 +12,8 @@ import (
 
 	"github.com/hexops/autogold"
 
-	"github.com/larschri/pestotrap/dirindex"
-	"github.com/larschri/pestotrap/hxwrapper"
-	"github.com/larschri/pestotrap/searchpage"
+	"github.com/larschri/pestotrap/pkg/dirindex"
+	"github.com/larschri/pestotrap/pkg/searchpage"
 )
 
 //go:embed testdata/jsons
@@ -28,7 +27,7 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 
-	idx, err := dirindex.TestIndex()
+	idx, err := dirindex.OpenIndex("")
 	if err != nil {
 		panic(err)
 	}
@@ -40,7 +39,7 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 
-	handler = hxwrapper.Handler(searchpage.New(idx))
+	handler = searchpage.New(idx)
 	os.Exit(m.Run())
 }
 
