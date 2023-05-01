@@ -6,10 +6,8 @@ import (
 
 	"github.com/blevesearch/bleve/v2"
 	bhttp "github.com/blevesearch/bleve/v2/http"
+	"github.com/larschri/pestotrap/web/templates"
 )
-
-//go:embed form.htmx
-var searchForm []byte
 
 type Handler struct {
 	indices map[string]bleve.Index
@@ -17,7 +15,7 @@ type Handler struct {
 }
 
 func (h *Handler) indexHTMLHandler(w http.ResponseWriter, r *http.Request) {
-	w.Write(searchForm)
+	templates.Templates.ExecuteTemplate(w, "index.tmpl", nil)
 }
 
 func New(indices ...bleve.Index) http.Handler {

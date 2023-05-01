@@ -53,29 +53,29 @@ function closeErrDialog() {
 </dialog>
 
 </div>
-
 <main class="container">
-<details>
-  <summary>
-    name1 <small><i>type1</i></small>
-    <br>
-    <small><i>raw1.raw / taxonomy1</i></small>
-  </summary>
-  <span aria-busy="true"
-	hx-get="/x/raw1.raw?id=id1"
-	hx-swap="outerHTML"
-	hx-trigger="toggle from:closest details">
-  </span>
-</details>
+<form>
+<input class="form-control"
+       type="search"
+       name="search"
+       placeholder="Begin Typing To Search ..."
+       id="searchInput"
+       autofocus
+       hx-get="q"
+       hx-trigger="keyup changed delay:200ms, search, load"
+       hx-target="#searchresult"
+       hx-swap="innerHTML"
+       hx-indicator=".htmx-indicator">
+</form>
+<div class="htmx-indicator" aria-busy="true"></div>
+<div id="searchresult" />
 
-	</main>
+</main>
+
 </body>
 </html>
-`, "headers": http.Header{
-		"Content-Type": []string{
-			"text/html; charset=utf-8",
-		},
-		"Hx-Trigger": []string{`{"setValidSearchInput":true}`},
-	},
+`, "headers": http.Header{"Content-Type": []string{
+		"text/html; charset=utf-8",
+	}},
 	"status": 200,
 }
