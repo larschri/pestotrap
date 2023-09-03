@@ -6,8 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"io"
 	"io/fs"
-	"io/ioutil"
 	"net/http"
 	"path"
 	"strings"
@@ -57,7 +57,7 @@ func NewServer(cfg fs.FS) (*Server, error) {
 			return nil, err
 		}
 
-		bs, err := ioutil.ReadAll(f)
+		bs, err := io.ReadAll(f)
 		if err != nil {
 			return nil, err
 		}
